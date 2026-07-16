@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: somar-autosocial
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port 10000
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: somar-autosocial-db
+          property: connectionString
+      - key: PAGE_ACCESS_TOKEN
+        sync: false
+      - key: INSTAGRAM_BUSINESS_ACCOUNT_ID
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: IMGBB_API_KEY
+        sync: false
+      - key: APP_PASSWORD
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+databases:
+  - name: somar-autosocial-db
+    plan: free

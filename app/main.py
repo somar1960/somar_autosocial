@@ -1,12 +1,13 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+import os
 from .database import engine, Base
 from .routers import auth, content, schedule, analytics
 from .services.scheduler import start_scheduler
 
 app = FastAPI(title="SOMAR AutoSocial")
 
-# إنشاء الجداول في قاعدة البيانات
+# إنشاء الجداول
 Base.metadata.create_all(bind=engine)
 
 # تضمين الراوترز
@@ -15,7 +16,7 @@ app.include_router(content.router)
 app.include_router(schedule.router)
 app.include_router(analytics.router)
 
-# تشغيل المجدول عند بدء التطبيق
+# تشغيل المجدول
 @app.on_event("startup")
 def startup():
     start_scheduler()
@@ -25,5 +26,7 @@ def startup():
 def health():
     return {"status": "ok"}
 
-# خدمة الملفات الثابتة (الواجهة) - يجب أن تكون آخر شيء
+# مجلدات الملفات الثابتة
+os.makedirs("temp_images", exist_ok=True)
+app.mount("/temp", StaticFiles(directory="temp_images"), name="temp")
 app.mount("/", StaticFiles(directory="app/static", html=True), name="static")

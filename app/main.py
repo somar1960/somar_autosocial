@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import os
 from .database import engine, Base
 from .routers import auth, content, schedule, analytics
@@ -26,7 +27,14 @@ def startup():
 def health():
     return {"status": "ok"}
 
-# مجلدات الملفات الثابتة
+# مجلد الصور المؤقتة
 os.makedirs("temp_images", exist_ok=True)
 app.mount("/temp", StaticFiles(directory="temp_images"), name="temp")
-app.mount("/", StaticFiles(directory="app/static", html=True), name="static")
+
+# صفحة البداية (الواجهة)
+@app.get("/")
+def read_index():
+    return FileResponse("app/static/index.html")
+
+# خدمة باقي الملفات الثابتة (CSS, JS)
+app.mount("/static", StaticFiles(directory="app/static"), name="static")

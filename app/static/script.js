@@ -106,25 +106,41 @@ async function generateAICaption() {
     const idea = document.getElementById('idea-input').value;
     const feeling = document.getElementById('feeling-input').value;
     const hashtags = document.getElementById('hashtags-input').value;
-    if (!idea && !feeling) return alert('أدخل الفكرة أو الشعور على الأقل');
-    if (!currentFile) return alert('اختر ملفاً أولاً');
+    const statusDiv = document.getElementById('upload-status');
+
+    if (!idea && !feeling) {
+        statusDiv.innerText = 'أدخل الفكرة أو الشعور على الأقل';
+        return;
+    }
+    if (!currentFile) {
+        statusDiv.innerText = 'اختر ملفاً أولاً';
+        return;
+    }
+
     const bullets = `فكرة: ${idea}\nشعور: ${feeling}\nهاشتاغات: ${hashtags}`;
     const formData = new FormData();
     formData.append('file', currentFile);
     formData.append('bullets', bullets);
-    const res = await fetch('/content/upload', {
-        method: 'POST',
-        headers: {'Authorization': `Bearer ${token}`},
-        body: formData
-    });
-    const data = await res.json();
-    if (res.ok) {
-        currentImageUrl = data.image_url;
-        currentCaption = data.suggested_caption;
-        document.getElementById('caption-area').classList.remove('hidden');
-        document.getElementById('generated-caption').value = currentCaption;
-    } else {
-        document.getElementById('upload-status').innerText = 'فشل الرفع أو التوليد';
+
+    try {
+        statusDiv.innerText = '⏳ جاري التوليد...';
+        const res = await fetch('/content/upload', {
+            method: 'POST',
+            headers: {'Authorization': `Bearer ${token}`},
+            body: formData
+        });
+        const data = await res.json();
+        if (res.ok) {
+            currentImageUrl = data.image_url;
+            currentCaption = data.suggested_caption;
+            document.getElementById('caption-area').classList.remove('hidden');
+            document.getElementById('generated-caption').value = currentCaption;
+            statusDiv.innerText = '';
+        } else {
+            statusDiv.innerText = 'خطأ: ' + (data.detail || JSON.stringify(data));
+        }
+    } catch (err) {
+        statusDiv.innerText = 'فشل الاتصال بالخادم: ' + err.message;
     }
 }
 

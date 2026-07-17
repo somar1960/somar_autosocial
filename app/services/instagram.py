@@ -1,20 +1,24 @@
 import requests
-from ..config import PAGE_ACCESS_TOKEN, INSTAGRAM_BUSINESS_ACCOUNT_ID, IMGBB_API_KEY
-from io import BytesIO
+import os
+from ..config import PAGE_ACCESS_TOKEN, INSTAGRAM_BUSINESS_ACCOUNT_ID
 
 BASE_URL = "https://graph.facebook.com/v19.0"
+TEMP_DIR = "temp_images"
 
-def upload_to_imgbb(file_bytes: bytes, filename: str) -> str:
-    """رفع الصورة إلى ImgBB وإرجاع الرابط المباشر"""
-    url = "https://api.imgbb.com/1/upload"
-    files = {"image": (filename, file_bytes)}
-    params = {"key": IMGBB_API_KEY}
-    r = requests.post(url, files=files, params=params)
-    data = r.json()
-    if data.get("success"):
-        return data["data"]["url"]
-    else:
-        raise Exception(f"ImgBB upload failed: {data}")
+# تأكد من وجود المجلد المؤقت
+os.makedirs(TEMP_DIR, exist_ok=True)
+
+def save_temp_image(file_bytes: bytes, filename: str, base_url: str) -> str:
+    """حفظ الصورة مؤقتاً وإرجاع رابطها العام"""
+    filepath = os.path.join(TEMP_DIR, filename)
+    with open(filepath, "wb") as f:
+        f.write(file_bytes)
+    return f"{base_url}/temp/{filename}"
+
+def delete_temp_image(filename: str):
+    filepath = os.path.join(TEMP_DIR, filename)
+    if os.path.exists(filepath):
+        os.remove(filepath)
 
 def create_media_container(image_url: str, caption: str):
     """إنشاء حاوية وسائط (صورة)"""

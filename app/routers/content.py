@@ -1,13 +1,14 @@
 from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from ..schemas import UploadResponse, ApprovePost
-from ..services.instagram import upload_to_imgbb, create_media_container, publish_container
+from ..services.instagram import save_temp_image, create_media_container, publish_container
 from ..services.openai_service import generate_caption
 from ..database import SessionLocal
 from ..models import ScheduledPost, PublishedPost
 from jose import jwt, JWTError
-from ..config import SECRET_KEY, ALGORITHM
+from ..config import SECRET_KEY, ALGORITHM, BASE_URL
 from datetime import datetime
+import uuid
 
 router = APIRouter(prefix="/content", tags=["content"])
 security = HTTPBearer()
@@ -27,7 +28,9 @@ async def upload_media(
     user: str = Depends(get_current_user)
 ):
     contents = await file.read()
-    image_url = upload_to_imgbb(contents, file.filename)
+    ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+    unique_name = f"{uuid.uuid4()}.{ext}"
+    image_url = save_temp_image(contents, unique_name, BASE_URL)
     caption = ""
     if bullets.strip():
         caption = generate_caption(bullets)
